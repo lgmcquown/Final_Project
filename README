@@ -1,0 +1,59 @@
+All calculations are done using Gauss's law. As such, we assume appropriate symmetries. All cylinders and planes will span the entirety 
+of the calculation space to simulate infinitely long cylinders and infinite planes.
+The general form of Gauss's law is as follows:
+			int(E_vec dot dA_vec) = q_enclosed/epsilon_0
+
+
+for shell surfaces and planes:
+	q_enc = charge/area * area = sigma*A
+	A is a function of geometry
+		Cylinder: A = 2*pi*radius*length of cylinder
+		Sphere: A = 4*pi*radius^2
+		Plane: A = the area of a small square on the surface (A will drop out)
+	The integral evaluates to the following:
+		Cylinder: E*2*pi*radius*length of cylinder
+		Shpere: E*4*pi*radius^2
+		Plane: E*2*A
+The LHS is always a function of r, a variable.
+The RHS is always a function of R and sigma. 
+	if r<R, sigma = 0
+	if r<=R, RHS radius =>constant R 
+
+For solid objects:
+	Q_enc = charge/volume * volume = rho*v
+	v is a function of geometry
+		Cylinder: v = pi*radius^2*length of cylinder
+		Sphere: v = 4/3*pi*radius^3
+	the integrals evaluate to the same things.
+        if r<R, RHS radius => r
+        if r<=R, RHS radius => constant R
+
+All V values are the negative integrals of E_vec dot dl_vec
+
+inputs:
+center = numpy.array([vector denoting center of object])
+radius = radius of object
+distribution = charge distribution
+axis = numpy.array([vector denoting central axis of cylinder])
+normal = numpy.array([vector normal to face of plane])
+
+
+
+ChargedSphere(center,radius,distribution)
+ChargedSphereShell(center,radius,distribution)
+ChargedCylinder(center,axis,radius,distribution)
+ChargedCylinderShell(center,axis,radius,distribution)
+ChargedPlane(center,distribution,normal)
+
+
+
+To use the Superimpose functions, place all the charged objects into one list.
+This list is the argument for the superimpose functions
+
+List_of_objects = [X1,X2,X3,...,X_n]
+x = numpy.array([position vector for the point you care about])
+
+
+EFIELD = E_Superposition(List_of_objects,x)
+VFIELD = V_Superposition(List_of_objects,x)
+

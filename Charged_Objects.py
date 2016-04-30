@@ -22,8 +22,8 @@ class ChargedSphere(ChargedObject):
             
     def E(self,x):
         if np.linalg.norm(x-self.c) == 0:
-            raise ZeroDivisionError
-        if np.linalg.norm(x-self.c) < self.rad :
+            E_field = 0
+        if 0 < np.linalg.norm(x-self.c) < self.rad :
             E_Field = (self.rho/constants.epsilon_0)*(np.linalg.norm(x-self.c)/3)
         if np.linalg.norm(x-self.c) >= self.rad:
             E_Field = (self.rho/constants.epsilon_0)*((self.rad**3)/(3*(np.linalg.norm(x-self.c)**2)))
@@ -71,46 +71,6 @@ class ChargedSphereShell(ChargedObject):
     
 ###################################################################
 
-class ChargedCylinder(ChargedObject):
-    
-    def __init__(self,center, axis, radius, distribution) :
-        self.c = center
-        self.rad = radius
-        self.axis = axis
-        self.sigma = sigma
-                
-    def E(self,x):
-        axis_hat = self.axis/np.linalg.norm(self.axis)
-        r_vec = x-self.c
-        r_parallel = np.dot(axis_hat,r_vec)
-        E_not_hat = (r_vec - (axis_hat*r_parallel))
-        E_hat = E_not_hat/np.linalg.norm(E_not_hat)
-        r_perp = np.linalg.norm(np.cross(axis_hat,r_vec))
-        
-        if r_perp <= self.rad:
-            E_Field = (self.rho/constants.epsilon_0)*(r_perp/2)
-        if r_perp > self.rad:
-            E_Field = (self.rho/constants.epsilon_0)*((self.rad**2)/(2*r_perp))
-        E_hat = r_vec - (axis_hat*r_parallel)
-        
-        return E_Field*E_hat
-    
-    def V(self,x):
-        axis_hat = self.axis/np.linalg.norm(self.axis)
-        r_vec = x-self.c
-        r_parallel = np.dot(axis_hat,r_vec)
-        E_not_hat = (r_vec - (axis_hat*r_parallel))
-        E_hat = E_not_hat/np.linalg.norm(E_not_hat)
-        r_perp = np.linalg.norm(np.cross(axis_hat,r_vec))
-        
-        if r_perp <= self.rad:
-            V_field = (self.rho/4*constants.epsilon_0)*((r_perp)^2)
-        if r_perp > self.rad:
-            V_field = (self.rho/(2*constants.epsilon_0))*((self.rho**2))*math.log(r_perp/self.R)
-        return V_field
-    
-#######################################################################
-
 class ChargedCylinderShell(ChargedObject):
     def __init__(self, center, axis, radius, distribution):
         self.c = center
@@ -144,8 +104,52 @@ class ChargedCylinderShell(ChargedObject):
         if r_perp <= self.rad :
             V_field = 0
         if r_perp > self.rad :
-            V_field = (self.sigma*self.rad/constants.epsilon_0)*math.log(r_perp/self.rad)
+            V_field = -(self.sigma*self.rad/constants.epsilon_0)*math.log(r_perp/self.rad)
             
+        return V_field
+    
+#######################################################################
+
+class ChargedCylinder(ChargedObject):
+    
+    def __init__(self,center, axis, radius, distribution) :
+        self.c = center
+        self.rad = radius
+        self.axis = axis
+        self.rho = distribution
+                
+    def E(self,x):
+        axis_hat = self.axis/np.linalg.norm(self.axis)
+        r_vec = x-self.c
+        r_parallel = np.dot(axis_hat,r_vec)
+        E_not_hat = (r_vec - (axis_hat*r_parallel))
+        E_hat = E_not_hat/np.linalg.norm(E_not_hat)
+        r_perp = np.linalg.norm(np.cross(axis_hat,r_vec))
+  
+        if r_perp == 0 :
+            return np.array([0,0,0])
+        if 0 < r_perp <= self.rad :
+            E_Field = (self.rho/constants.epsilon_0)*(r_perp/2)
+        if r_perp > self.rad :
+            E_Field = (self.rho/constants.epsilon_0)*((self.rad**2)/(2*r_perp))
+        
+        return E_Field*E_hat
+    
+    def V(self,x):
+        axis_hat = self.axis/np.linalg.norm(self.axis)
+        r_vec = x-self.c
+        r_parallel = np.dot(axis_hat,r_vec)
+        E_not_hat = (r_vec - (axis_hat*r_parallel))
+        E_hat = E_not_hat/np.linalg.norm(E_not_hat)
+        r_perp = np.linalg.norm(np.cross(axis_hat,r_vec))
+        
+        
+        if 0 == r_perp:
+            V_field = 0
+        if 0 < r_perp <= self.rad:
+            V_field = -(self.rho/4*constants.epsilon_0)*((r_perp)^2)
+        if r_perp > self.rad:
+            V_field = -(self.rho/(2*constants.epsilon_0))*((self.rho**2))*math.log(r_perp/self.rad)
         return V_field
     
 ############################################################################
@@ -159,11 +163,15 @@ class ChargedPlane(ChargedObject):
             self.sigma = distribution
             self.c = center
         
-        
-    def E(self,sigma):
+    def E(self,x):
         E_Field = self.sigma/(2*constants.epsilon_0)
-        E_hat = self.normal/np.linalg.norm(self.normal)
-        return E_Field*E_hat
+        if np.dot(x-self.c,self.normal) == 0:
+            E_hat = np.array([0,0,0])
+        if np.dot(x-self.c,self.normal) > 0:
+            E_hat = self.normal/np.linalg.norm(self.normal)
+        if np.dot(x-self.c,self.normal) < 0:
+            E_hat = -self.normal/np.linalg.norm(self.normal)
+        return E_Field*E_hat        
         
     def V(self,x):
         r_vec = (x -self.c)
