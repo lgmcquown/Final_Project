@@ -28,7 +28,8 @@ For solid objects:
         if r<R, RHS radius => r
         if r<=R, RHS radius => constant R
 
-All V values are the negative integrals of E_vec dot dl_vec
+All V values are the negative integrals of E_vec dot dl_vec from a reference
+point to the point we care about
 
 inputs:
 center = numpy.array([vector denoting center of object])
@@ -57,3 +58,9 @@ x = numpy.array([position vector for the point you care about])
 EFIELD = E_Superposition(List_of_objects,x)
 VFIELD = V_Superposition(List_of_objects,x)
 
+
+Equations are from the following locations:
+
+http://www.physicspages.com/2011/10/08/electric-potential-examples/
+https://www.youtube.com/watch?v=KGlZz9tCYRg
+and from Griffiths' Introduction to Electrodynamics Fourth Edition

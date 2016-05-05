@@ -33,12 +33,15 @@ class ChargedSphere(ChargedObject):
         return E_Field*E_hat
     
     def V(self,x):
-        if np.linalg.norm(x-self.c) == 0:
+        pi = 3.14159
+        q = self.rho*(4/3)*pi*((self.rad)^3)
+        r_perp = np.linalg.norm(x-self.c)
+        if r_perp == 0:
             raise ZeroDivisionError
-        if np.linalg.norm(x-self.c) < self.rad :
-            V = (self.rho/6*constants.epsilon_0)*(3 - ((np.linalg.norm(x-self.c)**2)/self.rad**2))
-        if np.linalg.norm(x-self.c) >= self.rad:
-            V = (self.rho*((self.rad)^3)/((3*constants.epsilon_0)*(np.linalg.norm(x-self.c))))         
+        if r_perp < self.rad :
+            V = (q/(8*pi*constants.epsilon_0*self.rad))*(3-(r_perp/self.rad)^2)
+        if r_perp >= self.rad:
+            V = q/(4*pi*constants.epsilon_0*r_perp)         
         return V    
     
 ################################################################
@@ -61,13 +64,17 @@ class ChargedSphereShell(ChargedObject):
         return E_Field*E_hat
         
     def V(self,x):
+        pi = 3.14159
+        q = self.sigma*(4)*pi*((self.rad)^2)
+        r_perp = np.linalg.norm(x-self.c)
         if np.linalg.norm(x-self.c) == 0:
             raise ZeroDivisionError
         if np.linalg.norm(x-self.c) < self.rad :
-            V = (self.sigma/6*constants.epsilon_0)*(3 - ((np.linalg.norm(x-self.c)**2)/self.rad**2))
+            V = q/(4*pi*constants.epsilon_0*self.rad)
         if np.linalg.norm(x-self.c) >= self.rad:
-            V = (self.sigma*((self.rad)^3)/((3*constants.epsilon_0)*(np.linalg.norm(x-self.c))))         
+            V = q/(4*pi*constants.epsilon_0*r_perp)         
         return V
+
     
 ###################################################################
 
@@ -100,13 +107,16 @@ class ChargedCylinderShell(ChargedObject):
         E_not_hat = (r_vec - (axis_hat*r_parallel))
         E_hat = E_not_hat/np.linalg.norm(E_not_hat)
         r_perp = np.linalg.norm(np.cross(axis_hat,r_vec))
+        pi = 3.14159
+        a = 1000 #This is an arbitrary choice
         
         if r_perp <= self.rad :
-            V_field = 0
+            V_field = (self.sigma/4*constants.epsilon_0)*(self.rad**2 -r_perp**2)
         if r_perp > self.rad :
-            V_field = -(self.sigma*self.rad/constants.epsilon_0)*math.log(r_perp/self.rad)
+            V_field = (self.sigma*self.rad/2*pi*constants.epsilon_0)*math.log(r_perp/a)
             
         return V_field
+
     
 #######################################################################
 
@@ -142,15 +152,16 @@ class ChargedCylinder(ChargedObject):
         E_not_hat = (r_vec - (axis_hat*r_parallel))
         E_hat = E_not_hat/np.linalg.norm(E_not_hat)
         r_perp = np.linalg.norm(np.cross(axis_hat,r_vec))
+        pi = 3.14159
+        q = self.rho*pi*((self.rad)^2) 
+        a = 1000 #this is an arbitrary reference choice and either 0 or infinity would lead to problems
         
-        
-        if 0 == r_perp:
-            V_field = 0
-        if 0 < r_perp <= self.rad:
-            V_field = -(self.rho/4*constants.epsilon_0)*((r_perp)^2)
+        if r_perp <= self.rad:
+            V_field = (self.rho/4*constants.epsilon_0)*(self.rad**2 - r_perp**2)
         if r_perp > self.rad:
-            V_field = -(self.rho/(2*constants.epsilon_0))*((self.rho**2))*math.log(r_perp/self.rad)
-        return V_field
+            V_field = q/(2*pi*constants.epsilon_0)*math.log(r_perp/a)
+        return V_field 
+
     
 ############################################################################
 
@@ -174,9 +185,10 @@ class ChargedPlane(ChargedObject):
         return E_Field*E_hat        
         
     def V(self,x):
+        a = 1000 #this is an arbitrary choice as infinity would cause problems.
         r_vec = (x -self.c)
         perp_distance = np.dot(self.normal,r_vec)
-        V_field = -np.linalg.norm(self.E(self.sigma))*perp_distance
+        V_field = np.linalg.norm(self.E(x))*(perp_distance-a)
         return V_field
         
 ##############################################################################
@@ -194,3 +206,27 @@ def V_Superposition(List_of_objects,x):
     for obj in List_of_objects:
         Total_V += obj.V(x)
     return Total_V
+
+##############################################################################
+
+def Sweep_Points(List_of_Objects,x_range,y_range,z_range):
+    import Charged_Objects
+    Xpoints = list(range(x_range[0],x_range[1]+1))
+    Ypoints = list(range(y_range[0],y_range[1]+1))
+    Zpoints = list(range(z_range[0],z_range[1]+1))
+    I = len(Xpoints)
+    J = len(Ypoints)
+    K = len(Zpoints)
+    NumElements = I*J*K*4
+    Array = np.array(range(NumElements))
+    DataTensor = Array.reshape(I,J,K,4)
+    for i in range(0,I):
+        x = Xpoints[i]
+        for j in range(0,J):
+            y = Ypoints[j]
+            for k in range(0,K):
+                z = Zpoints[k]
+                E = E_Superposition(List_of_Objects,[x,y,z])
+                V = V_Superposition(List_of_Objects,[x,y,z])
+                DataTensor[i,j,k,:] = [E[0],E[1],E[2],V]
+    return DataTensor

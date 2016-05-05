@@ -65,7 +65,7 @@ def test_arbdirection_cylinder() :
     E = C.E(np.array([1,1,2]))
     obs = E/np.linalg.norm(E)
     exp = np.array([0,0,1])
-    assert np.array_equal(obs,exp)  == True
+    assert np.testing.assert_almost_equal(obs,exp, decimal = 10)
 
 #If you run this code, you'll find that it returns [1e-16,1e-16,1], which is essentially [0,0,1]
 
